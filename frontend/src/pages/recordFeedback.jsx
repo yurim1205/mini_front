@@ -1,55 +1,57 @@
-import React from "react";
+import React, { useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import owlImg from "../assets/img/owl.png"; // 부엉이 이미지 경로에 맞게 수정
+import owlImg from "../assets/img/owl.png"; 
+import { ChevronLeftIcon } from '@heroicons/react/24/solid';
 
-function FileUploadPage() {
+function RecordFeedback() {
   const navigate = useNavigate();
+  const fileInputRef = useRef();
+
+  const handleButtonClick = () => {
+    fileInputRef.current.click();
+  };
+
 
   return (
-    <div
-      className="w-screen h-screen flex justify-center items-center"
-      style={{
-        background: "linear-gradient(to bottom, #b3cfff 0%, #e0eaff 60%, #fff 100%)"
-      }}
-    >
+    <div className="w-screen h-screen flex justify-center items-center bg-gray-100">
       <div
-        className="relative flex flex-col items-center max-w-[360px] w-full"
+        className="relative h-screen flex flex-col items-center max-w-[360px] w-full"
+        style={{
+          background: "linear-gradient(to bottom, #6699E6 0%, #fff 100%)"
+        }}
       >
-        <div className="flex items-center w-full px-4 pt-6">
-          {/* <button onClick={() => navigate(-1)} className="text-2xl mr-2">{'←'}</button> */}
-          <span className="text-xl font-semibold mx-auto text-white">음성 파일로 피드백 받기</span>
+        <div className="flex items-center w-full px-4 pt-6 justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="bg-transparent p-0 leading-none"
+            style={{ width: '2.25rem', height: '2.25rem' }}
+          >
+            <ChevronLeftIcon className="w-8 h-8 text-white" />
+          </button>
+          <span className="text-xl font-semibold text-white text-center flex-1">
+            녹음해서 피드백 받기
+          </span>
+          <div style={{width: '2.25rem'}} /> 
         </div>
 
         <img
           src={owlImg}
           alt="owl"
-          className="w-[172px] h-[200px] mx-auto mt-16"
+          className="w-32 mx-auto mt-12"
         />
 
         <div
-          className="rounded-t-2xl rounded-b-none shadow-md w-full px-6 py-6 mt-2 flex flex-col items-center min-h-[320px] bg-white bg-opacity-80"
+          className="rounded-3xl rounded-b-none shadow-md w-full px-6 py-6 mt-0 flex flex-col items-center min-h-screen"
+          style={{
+            background: "linear-gradient(to bottom, #e0eaff 0%, #fff 60%)"
+          }}
         >
-          {/* 파일 업로드 부분 */}
-          <div className="flex w-full mb-4">
-            <input
-              type="text"
-              className="border border-black rounded-l px-2 py-1 flex-1"
-              placeholder="파일을 선택하세요"
-              readOnly
-            />
-            <button className="border border-black border-l-0 rounded-r px-4 py-1 bg-gray-100">
-              파일 선택
-            </button>
-          </div>
-          <ul className="text-xs text-gray-700 w-full list-disc pl-4">
-            <li>파일의 확장자는 .wav, .mp3, .m4a여야 하며 최대 nMB까지의 파일만 업로드 가능합니다.</li>
-            <li>길이가 n분을 초과하면 정확도가 떨어질 수 있습니다.</li>
-            <li>음성이 너무 작거나 주변 소음이 심하면 정확도가 떨어질 수 있습니다.</li>
-          </ul>
+          
+        
         </div>
       </div>
     </div>
   );
 }
 
-export default FileUploadPage;
+export default RecordFeedback;
