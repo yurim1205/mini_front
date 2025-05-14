@@ -3,6 +3,8 @@ import Home from './pages/home';
 import FileFeedback from './pages/fileFeedback';
 import RecordFeedback from './pages/recordFeedback';
 import Loading from './pages/loading';
+import ResultFeedback from './pages/resultFeedback';
+
 function App() {
   return (
     <BrowserRouter>
@@ -11,6 +13,7 @@ function App() {
         <Route path="/file" element={<FileFeedback />} />
         <Route path="/record" element={<RecordFeedback />} />
         <Route path="/loading" element={<Loading />} />
+        <Route path="/resultFeedback" element={<ResultFeedback />} />
       </Routes>
     </BrowserRouter>
   );

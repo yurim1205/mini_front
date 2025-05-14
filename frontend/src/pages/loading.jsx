@@ -25,7 +25,7 @@ function Loading() {
 
       useEffect(() => {
         const timer = setTimeout(() => {
-          navigate('/result');
+          navigate('/resultFeedback');
         }, 20000);
     
         return () => clearTimeout(timer);
