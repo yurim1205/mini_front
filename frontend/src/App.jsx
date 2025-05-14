@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/home';
 import FileFeedback from './pages/fileFeedback';
 import RecordFeedback from './pages/recordFeedback';
-
+import Loading from './pages/loading';
 function App() {
   return (
     <BrowserRouter>
@@ -10,6 +10,7 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/file" element={<FileFeedback />} />
         <Route path="/record" element={<RecordFeedback />} />
+        <Route path="/loading" element={<Loading />} />
       </Routes>
     </BrowserRouter>
   );
