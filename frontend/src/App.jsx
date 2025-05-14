@@ -4,6 +4,7 @@ import FileFeedback from './pages/fileFeedback';
 import RecordFeedback from './pages/recordFeedback';
 import Loading from './pages/loading';
 import ResultFeedback from './pages/resultFeedback';
+import AllContent from './pages/allContent';
 
 function App() {
   return (
@@ -14,6 +15,7 @@ function App() {
         <Route path="/record" element={<RecordFeedback />} />
         <Route path="/loading" element={<Loading />} />
         <Route path="/resultFeedback" element={<ResultFeedback />} />
+        <Route path="/allContent" element={<AllContent />} />
       </Routes>
     </BrowserRouter>
   );

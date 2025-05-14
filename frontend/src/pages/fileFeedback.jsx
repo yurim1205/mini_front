@@ -26,8 +26,30 @@ function FileFeedback() {
   };
 
   const handleAnalysis = () => {
-    navigate('/loading');
-  };
+    navigate('/loading', {
+      state: {
+        fileName: fileName,
+        // API 연동 시 여기 수정
+      }
+    });
+  }
+  // const handleAnalysis = async () => {
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append('file', fileInputRef.current.files[0]);
+
+  //     // 로딩 페이지로 먼저 이동
+  //     navigate('/loading', {
+  //       state: {
+  //         fileName: fileName,
+  //         formData: formData  // API 요청에 필요한 파일 데이터
+  //       }
+  //     });
+  //   } catch (error) {
+  //     console.error('파일 처리 중 오류가 발생했습니다:', error);
+  //     // 에러 처리 로직 추가 필요
+  //   }
+  // };
 
   return (
     <div className="w-screen h-screen flex justify-center items-center bg-gray-100">
@@ -39,7 +61,7 @@ function FileFeedback() {
       >
         <div className="flex items-center w-full px-4 pt-6 justify-between">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/")}
             className="bg-transparent p-0 leading-none"
             style={{ width: '2.25rem', height: '2.25rem' }}
           >
@@ -116,7 +138,11 @@ function FileFeedback() {
             <li>음성이 너무 작거나 주변 소음이 심하면 정확도가 떨어질 수 있습니다.</li>
           </ul>
 
-          <AnalysisBtn onClick={handleAnalysis} className="w-56" />
+          <AnalysisBtn 
+            onClick={handleAnalysis} 
+            className={`w-56 ${!fileName && 'opacity-50 cursor-not-allowed'}`}
+            disabled={!fileName}
+          />
         </div>
       </div>
     </div>

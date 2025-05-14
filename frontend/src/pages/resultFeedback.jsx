@@ -1,40 +1,101 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { ChevronLeftIcon } from '@heroicons/react/24/solid';
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { ChevronLeftIcon, XMarkIcon } from '@heroicons/react/24/solid';
 import owlImg from "../assets/img/owl.png";
 import GoHomeBtn from "../components/buttons/gohomeBtn";
 import AllTextBtn from "../components/buttons/allTextBtn";
+import FeedbackModal from "../components/madals/feedbackModal";
 
 function ResultFeedback() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const [feedbackData, setFeedbackData] = useState(null);
+  const [selectedFeedback, setSelectedFeedback] = useState(null);
 
-  // 더미 피드백 데이터
-  const feedbackSummary = [
-    { type: "말버릇", count: 2, color: "text-red-500" },
-    { type: "속도", count: 1, color: "text-red-500" },
-    { type: "억양", count: 1, color: "text-green-600" },
-    { type: "발음", count: 2, color: "text-green-600" },
-  ];
-  const totalCount = feedbackSummary.reduce((acc, cur) => acc + cur.count, 0);
+  // 여기에 API 추가하기 !!!!!!
+  // API로부터 데이터를 받아오는 함수
+  const fetchFeedbackData = async () => {
+    try {
+      // 임시 더미 데이터
+      const dummyData = {
+        summary: {
+          total_count: 6,
+          feedback_categories: [
+            {
+              id: "habit",
+              name: "말버릇",
+              count: 2,
+              level: "warning",
+              description: "말이 너무 빨라요. 조금만 천천히 해주세요."
+            },
+            {
+              id: "speed",
+              name: "속도",
+              count: 1,
+              level: "warning",
+              description: "말이 너무 빨라요. 조금만 천천히 해주세요."
+            },
+          ]
+        },
+        segments: [
+          {
+            id: 1,
+            startTime: "00:02",
+            endTime: "00:05",
+            text: "안녕하세요. 발표자 김강현입니다.",
+            feedback: ["habit"]
+          },
+          {
+            id: 2,
+            startTime: "00:13",
+            endTime: "00:15",
+            text: "드디어 미니 프로젝트가 끝이 났는데요.",
+            feedback: ["speed", "habit"]
+          },
+          {
+            id: 3,
+            startTime: "00:31",
+            endTime: "00:35",
+            text: "음.. 그럼 이제 저희 프로젝트를 소개하겠습니다.",
+            feedback: ["pronunciation", "pronunciation", "intonation"]
+          }
+        ]
+      };
+      
+      setFeedbackData(dummyData);
+    } catch (error) {
+      console.error('피드백 데이터를 불러오는데 실패했습니다:', error);
+    }
+  };
 
-  // 피드백 상세 더미 데이터
-  const feedbackList = [
-    {
-      time: "00:02",
-      text: "안녕하세요. 발표자 김강현입니다.",
-      badges: [],
-    },
-    {
-      time: "00:13",
-      text: "드디어 미니 프로젝트가 끝이 났는데요.",
-      badges: ["속도"],
-    },
-    {
-      time: "00:31",
-      text: "음.. 그럼 이제 저희 프로젝트를 소개하겠습니다.",
-      badges: ["속도", "발음", "억양"],
-    },
-  ];
+  useEffect(() => {
+    // location.state가 없으면 홈으로 리다이렉트
+    if (!location.state?.fileName) {
+      navigate('/');
+      return;
+    }
+    fetchFeedbackData();
+  }, [location.state?.fileName]);
+
+  if (!feedbackData) {
+    return null;
+  }
+
+  const getFeedbackColor = (level) => {
+    return level === "warning" ? "text-red-500" : "text-green-600";
+  };
+
+  const getFeedbackIcon = (level) => {
+    return level === "warning" ? "⚠️" : "✓";
+  };
+
+  const handleFeedbackClick = (feedbackId, text) => {
+    const category = feedbackData.summary.feedback_categories.find(c => c.id === feedbackId);
+    setSelectedFeedback({
+      ...category,
+      text: text
+    });
+  };
 
   return (
     <div className="w-screen min-h-screen flex justify-center items-start bg-gray-100 relative">
@@ -46,7 +107,7 @@ function ResultFeedback() {
       >
         <div className="flex items-center w-full px-4 pt-4 justify-between">
           <button
-            onClick={() => navigate("/filefeedback")}
+            onClick={() => navigate("/file")}
             className="bg-transparent p-0 leading-none"
             style={{ width: '2.25rem', height: '2.25rem' }}
           >
@@ -58,41 +119,94 @@ function ResultFeedback() {
           <div style={{ width: '2.25rem' }} />
         </div>
         {/* 큰 사각형 카드 */}
-        <div className="border border-white rounded-xl shadow p-4 mt-6 w-[92%] mx-auto bg-transparent">
-          {/* 상단 요약 카드만 별도 div로 묶고 배경색 지정 */}
-          <div className="flex items-center mb-2 bg-white rounded-lg px-3 py-2">
+        <div className="border border-white rounded-xl shadow p-4 mt-6 w-[92%] mx-auto bg-transparent flex flex-col h-[600px]">
+          {/* 상단 요약 카드 */}
+          <div className="flex items-center mb-4 bg-white rounded-lg px-3 py-2 flex-shrink-0">
             <img src={owlImg} alt="owl" className="w-14 h-14 mr-3" />
             <div className="flex-1 text-xs">
-              <div className="flex flex-wrap gap-x-4 gap-y-1 mb-1 items-center">
-                <span className="text-red-500 font-bold">ㆍ말버릇 <span className="text-gray-500">2건</span></span>
-                <span className="text-red-500 font-bold">ㆍ속도 <span className="text-gray-500">1건</span></span>
-                <span className="text-green-300 font-bold">ㆍ억양 <span className="text-gray-500">1건</span></span>
-                <span className="text-green-300 font-bold">ㆍ발음 <span className="text-gray-500">2건</span></span>
+              <div className="flex flex-col gap-y-1">
+                <div className="grid grid-cols-2 gap-x-2">
+                  <span className="text-red-500 font-bold">
+                    ㆍ말버릇 <span className="text-gray-500">2건</span>
+                  </span>
+                  <span className="text-green-600 font-bold">
+                    ㆍ억양 <span className="text-gray-500">1건</span>
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 gap-x-2">
+                  <span className="text-red-500 font-bold">
+                    ㆍ속도 <span className="text-gray-500">1건</span>
+                  </span>
+                  <span className="text-green-600 font-bold">
+                    ㆍ발음 <span className="text-gray-500">2건</span>
+                  </span>
+                </div>
               </div>
-              <div className="text-gray-500 mt-1">총 {totalCount}건 피드백</div>
+              <div className="text-gray-500 mt-2 text-right">총 {feedbackData.summary.total_count}건 피드백</div>
             </div>
           </div>
           {/* 피드백 상세 리스트 */}
-          <div className="w-full">
-            {feedbackList.map((item, idx) => (
-              <div key={idx} className="mb-3">
-                {item.time && <div className="text-xs text-blue-900 mb-1">{item.time}</div>}
-                <div className="flex items-center flex-wrap gap-2">
-                  <span className="text-base text-gray-800">{item.text}</span>
-                  {item.badges.length > 0 && (
-                    <span className="ml-2 px-2 py-0.5 bg-white border border-red-400 text-red-500 text-xs rounded flex items-center font-bold">
-                      <span className="mr-1">⚠️</span>{item.badges.join(", ")}
-                    </span>
-                  )}
+          <div className="flex-1 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-gray-100">
+            {feedbackData.segments.map((segment) => (
+              <div key={segment.id}>
+                <div className="flex items-start">
+                  <div className="text-xs text-blue-900 w-24 flex-shrink-0 pt-1">
+                    {segment.startTime} - {segment.endTime}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-start flex-wrap gap-2">
+                      <span className="text-base text-gray-800 relative group">
+                        {segment.text}
+                        {segment.feedback.some(feedbackId => {
+                          const category = feedbackData.summary.feedback_categories.find(c => c.id === feedbackId);
+                          return category && category.level === 'warning';
+                        }) && (
+                          <span className="absolute bottom-0 left-0 w-full h-[1px] bg-red-400"></span>
+                        )}
+                      </span>
+                      <div className="flex gap-1 flex-wrap">
+                        {segment.feedback.map(feedbackId => {
+                          const category = feedbackData.summary.feedback_categories.find(c => c.id === feedbackId);
+                          if (!category || category.level !== 'warning') return null;
+                          
+                          return (
+                            <button
+                              key={category.id}
+                              onClick={() => handleFeedbackClick(feedbackId, segment.text)}
+                              className="px-2 py-0.5 bg-white border border-red-400 text-red-500 text-xs rounded flex items-center font-bold"
+                            >
+                              <span className="mr-1">⚠️</span>
+                              {category.name}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
           </div>
         </div>
+        
+        {/* 피드백 상세 모달 */}
+        <FeedbackModal 
+          feedback={selectedFeedback} 
+          onClose={() => setSelectedFeedback(null)}
+          text={selectedFeedback?.text}
+        />
         {/* 버튼 수평 배치 */}
         <div className="flex w-full gap-x-2 px-4 mt-6">
           <GoHomeBtn onClick={() => navigate("/")} className="flex-1 text-sm" />
-          <AllTextBtn onClick={() => navigate("/")} className="flex-1 text-sm" />
+          <AllTextBtn 
+            onClick={() => navigate("/allContent", { 
+              state: { 
+                feedbackData,
+                fileName: location.state?.fileName 
+              }
+            })} 
+            className="flex-1 text-sm" 
+          />
         </div>
       </div>
     </div>
