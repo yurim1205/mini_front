@@ -81,14 +81,6 @@ function ResultFeedback() {
     return null;
   }
 
-  const getFeedbackColor = (level) => {
-    return level === "warning" ? "text-red-500" : "text-green-600";
-  };
-
-  const getFeedbackIcon = (level) => {
-    return level === "warning" ? "⚠️" : "✓";
-  };
-
   const handleFeedbackClick = (feedbackId, text) => {
     const category = feedbackData.summary.feedback_categories.find(c => c.id === feedbackId);
     setSelectedFeedback({
@@ -97,8 +89,14 @@ function ResultFeedback() {
     });
   };
 
+  // 총 피드백 건수를 카테고리별 count 합산으로 계산
+  const totalCount = feedbackData.summary.feedback_categories.reduce(
+    (sum, cat) => sum + cat.count, 0
+  );
+
   return (
     <div className="w-screen min-h-screen flex justify-center items-start bg-gray-100 relative">
+    
       <div
         className="relative min-h-screen flex flex-col items-center justify-start max-w-[360px] w-full"
         style={{
@@ -120,72 +118,77 @@ function ResultFeedback() {
         </div>
         {/* 큰 사각형 카드 */}
         <div className="border border-white rounded-xl shadow p-4 mt-6 w-[92%] mx-auto bg-transparent flex flex-col h-[600px]">
+         
           {/* 상단 요약 카드 */}
           <div className="flex items-center mb-4 bg-white rounded-lg px-3 py-2 flex-shrink-0">
             <img src={owlImg} alt="owl" className="w-14 h-14 mr-3" />
             <div className="flex-1 text-xs">
               <div className="flex flex-col gap-y-1">
-                <div className="grid grid-cols-2 gap-x-2">
-                  <span className="text-red-500 font-bold">
-                    ㆍ말버릇 <span className="text-gray-500">2건</span>
-                  </span>
-                  <span className="text-green-600 font-bold">
-                    ㆍ억양 <span className="text-gray-500">1건</span>
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-x-2">
-                  <span className="text-red-500 font-bold">
-                    ㆍ속도 <span className="text-gray-500">1건</span>
-                  </span>
-                  <span className="text-green-600 font-bold">
-                    ㆍ발음 <span className="text-gray-500">2건</span>
-                  </span>
-                </div>
+                {Array.from({ length: Math.ceil(feedbackData.summary.feedback_categories.length / 2) }).map((_, rowIdx) => (
+                  <div className="grid grid-cols-2 gap-x-2" key={rowIdx}>
+                    {feedbackData.summary.feedback_categories.slice(rowIdx * 2, rowIdx * 2 + 2).map(cat => (
+                      <span
+                        key={cat.id}
+                        className={cat.level === "warning" ? "text-red-500 font-bold" : "text-green-600 font-bold"}
+                      >
+                        ㆍ{cat.name} <span className="text-gray-500">{cat.count}건</span>
+                      </span>
+                    ))}
+                  </div>
+                ))}
               </div>
-              <div className="text-gray-500 mt-2 text-right">총 {feedbackData.summary.total_count}건 피드백</div>
+              <div className="text-gray-500 mt-2 text-right">총 {totalCount}건 피드백</div>
             </div>
           </div>
+          
           {/* 피드백 상세 리스트 */}
-          <div className="flex-1 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-gray-100">
-            {feedbackData.segments.map((segment) => (
-              <div key={segment.id}>
-                <div className="flex items-start">
-                  <div className="text-xs text-blue-900 w-24 flex-shrink-0 pt-1">
-                    {segment.startTime} - {segment.endTime}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start flex-wrap gap-2">
-                      <span className="text-base text-gray-800 relative group">
-                        {segment.text}
-                        {segment.feedback.some(feedbackId => {
-                          const category = feedbackData.summary.feedback_categories.find(c => c.id === feedbackId);
-                          return category && category.level === 'warning';
-                        }) && (
-                          <span className="absolute bottom-0 left-0 w-full h-[1px] bg-red-400"></span>
-                        )}
-                      </span>
-                      <div className="flex gap-1 flex-wrap">
-                        {segment.feedback.map(feedbackId => {
-                          const category = feedbackData.summary.feedback_categories.find(c => c.id === feedbackId);
-                          if (!category || category.level !== 'warning') return null;
-                          
-                          return (
-                            <button
-                              key={category.id}
-                              onClick={() => handleFeedbackClick(feedbackId, segment.text)}
-                              className="px-2 py-0.5 bg-white border border-red-400 text-red-500 text-xs rounded flex items-center font-bold"
-                            >
-                              <span className="mr-1">⚠️</span>
-                              {category.name}
-                            </button>
-                          );
-                        })}
+          <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-400 scrollbar-track-gray-100 pr-2 space-y-3">
+            {feedbackData.segments
+              .filter(segment =>
+                segment.feedback &&
+                segment.feedback.some(feedbackId =>
+                  feedbackData.summary.feedback_categories.some(cat => cat.id === feedbackId)
+                )
+              )
+              .map((segment) => (
+                <div key={segment.id}>
+                  <div className="flex items-start">
+                    <div className="text-xs text-blue-900 w-24 flex-shrink-0 pt-1">
+                      {segment.startTime} - {segment.endTime}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-start flex-wrap gap-2">
+                        <span className="text-base text-gray-800 relative group">
+                          {segment.text}
+                          {segment.feedback.some(feedbackId => {
+                            const category = feedbackData.summary.feedback_categories.find(c => c.id === feedbackId);
+                            return category && category.level === 'warning';
+                          }) && (
+                            <span className="absolute bottom-0 left-0 w-full h-[1px] bg-red-400"></span>
+                          )}
+                        </span>
+                        <div className="flex gap-1 flex-wrap">
+                          {segment.feedback.map(feedbackId => {
+                            const category = feedbackData.summary.feedback_categories.find(c => c.id === feedbackId);
+                            if (!category || category.level !== 'warning') return null;
+                            
+                            return (
+                              <button
+                                key={category.id}
+                                onClick={() => handleFeedbackClick(feedbackId, segment.text)}
+                                className="px-2 py-0.5 bg-white border border-red-400 text-red-500 text-xs rounded flex items-center font-bold"
+                              >
+                                <span className="mr-1">⚠️</span>
+                                {category.name}
+                              </button>
+                            );
+                          })}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
         
@@ -195,6 +198,7 @@ function ResultFeedback() {
           onClose={() => setSelectedFeedback(null)}
           text={selectedFeedback?.text}
         />
+        
         {/* 버튼 수평 배치 */}
         <div className="flex w-full gap-x-2 px-4 mt-6">
           <GoHomeBtn onClick={() => navigate("/")} className="flex-1 text-sm" />
