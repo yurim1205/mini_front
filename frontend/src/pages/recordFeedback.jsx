@@ -1,4 +1,3 @@
-// src/pages/RecordFeedback.jsx
 import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import owlImg from "../assets/img/owl.png";
@@ -9,12 +8,10 @@ import {
   StopIcon as StopSquareIcon,
   MicrophoneIcon,
   ArrowPathIcon,
-  ArrowUturnLeftIcon,
-  PaperAirplaneIcon
+  ArrowUturnLeftIcon
 } from '@heroicons/react/24/solid';
 import AnalysisBtn from '../components/common/analysisBtn';
 
-// ... (이전 코드와 동일한 상수 및 헬퍼 함수 정의) ...
 const RECORDING_STATE = {
   READY: 'ready',
   REQUESTING_PERMISSION: 'requesting_permission',
@@ -470,27 +467,10 @@ function RecordFeedback() {
                   onClick={handleAnalysis}
                   disabled={!recordedAudioBlob || !isPlayable || recordingState === RECORDING_STATE.ANALYZING}
                 >
-                  {recordingState === RECORDING_STATE.ANALYZING ? (
-                    "로딩 페이지로 이동 중..." // 텍스트 변경
-                  ) : (
-                    <span className="flex items-center justify-center">
-                      <PaperAirplaneIcon className="w-5 h-5 mr-2 transform -rotate-45" />
-                      분석 시작
-                    </span>
-                  )}
+                  {recordingState === RECORDING_STATE.ANALYZING ? "로딩 페이지로 이동 중..." : "분석 시작"}
                 </AnalysisBtn>
             </div>
           </>
-        );
-      case RECORDING_STATE.ANALYZING: // 이 상태는 이제 로딩 페이지로 즉시 이동하므로, 화면에 오래 표시되지 않을 수 있습니다.
-        return (
-          <div className="flex flex-col items-center justify-center flex-1 text-white">
-            <svg className="animate-spin h-12 w-12 text-white mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <p className="text-xl">로딩 페이지로 이동 중...</p> {/* 텍스트 변경 */}
-          </div>
         );
       case RECORDING_STATE.ERROR:
         return (
@@ -529,13 +509,17 @@ function RecordFeedback() {
           <div style={{ width: '2.25rem' }} />
         </div>
         <img src={owlImg} alt="부엉이" className="w-32 mx-auto mt-8" />
-        <div className="bg-white rounded-2xl shadow-md w-full px-6 py-6 mt-2 flex flex-col items-center">
-          {/* 녹음 상태/마이크/시간/버튼 등 */}
-          <div className="w-full flex flex-col items-center mb-4">
+        <div
+          className="rounded-3xl rounded-b-none shadow-md w-full px-6 py-6 mt-0 flex flex-col items-center min-h-screen"
+          style={{
+            background: "linear-gradient(to bottom, #e0eaff 0%, #fff 60%)"
+          }}
+        >   {/* 녹음 상태/마이크/시간/버튼 등 */}
+          <div className="w-full flex flex-col items-center mb-4 flex-1 justify-center">
             {renderMainContent()}
           </div>
           {/* 안내 문구 */}
-          <ul className="text-xs text-gray-700 w-full list-disc pl-4 mt-2 mb-2">
+          <ul className="text-xs text-gray-700 w-full list-disc pl-4 mt-0 mb-[440px]">
             <li>최대 n분까지 녹음 가능합니다.</li>
             <li>음성이 너무 작거나 주변 소음이 심하면 정확도가 떨어질 수 있습니다.</li>
           </ul>
