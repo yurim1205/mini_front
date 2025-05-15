@@ -4,7 +4,7 @@ function GoHomeBtn({ children = "홈으로 가기", onClick, className = "", ...
   return (
     <button
       className={`
-        w-full
+        w-[40px]
         bg-[#0E7EDA]
         hover:bg-blue-700
         text-white

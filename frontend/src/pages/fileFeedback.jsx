@@ -25,31 +25,35 @@ function FileFeedback() {
     }
   };
 
-  const handleAnalysis = () => {
-    navigate('/loading', {
-      state: {
-        fileName: fileName,
-        // API 연동 시 여기 수정
-      }
-    });
-  }
-  // const handleAnalysis = async () => {
-  //   try {
-  //     const formData = new FormData();
-  //     formData.append('file', fileInputRef.current.files[0]);
+  const handleAnalysis = async () => {
+    try {
+      const formData = new FormData();
+      formData.append('file', fileInputRef.current.files[0]);
 
-  //     // 로딩 페이지로 먼저 이동
-  //     navigate('/loading', {
-  //       state: {
-  //         fileName: fileName,
-  //         formData: formData  // API 요청에 필요한 파일 데이터
-  //       }
-  //     });
-  //   } catch (error) {
-  //     console.error('파일 처리 중 오류가 발생했습니다:', error);
-  //     // 에러 처리 로직 추가 필요
-  //   }
-  // };
+      // 1. POST 요청 시작 및 응답 대기
+      const response = await fetch('http://192.168.0.195:8000/api/speech/analyze', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await response.json();
+
+      const filteredSegments = data.segments.filter(
+        segment =>
+          CATEGORY_META.some(cat => segment[cat.id])
+      );
+
+      const visibleCategoryCounts = CATEGORY_META.map(cat => {
+        const count = filteredSegments.filter(segment =>
+          segment[cat.id]
+        ).length;
+        return { ...cat, visibleCount: count };
+      });
+
+      navigate('/loading', { state: { data, fileName } });
+    } catch (error) {
+      console.error('파일 처리 중 오류가 발생했습니다:', error);
+    }
+  };
 
   return (
     <div className="w-screen h-screen flex justify-center items-center bg-gray-100">

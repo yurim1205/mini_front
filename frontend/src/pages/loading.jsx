@@ -7,7 +7,6 @@ import img4 from "../assets/img/owl4.png";
 import img5 from "../assets/img/owl5.png";
 import img6 from "../assets/img/owl6.png";
 import img7 from "../assets/img/owl7.png";
-// setTimeout 대신 API 호출 코드로 수정하기
 
 function Loading() {
     const navigate = useNavigate();
@@ -21,6 +20,10 @@ function Loading() {
         navigate('/');
         return;
       }
+      // data가 있으면 바로 결과 페이지로 이동
+      if (location.state?.data) {
+        navigate('/resultFeedback', { state: { result: location.state.data } });
+      }
     }, [location.state, navigate]);
 
     useEffect(() => {
@@ -31,16 +34,6 @@ function Loading() {
         }, 2000);
         return () => clearInterval(interval);
       }, [images]);
-
-      useEffect(() => {
-        const timer = setTimeout(() => {
-          navigate('/resultFeedback', {
-            state: location.state
-          });
-        }, 5000);
-    
-        return () => clearTimeout(timer);
-      }, [navigate, location.state]);
 
       return (
         <div className="w-screen h-screen flex justify-center items-center bg-white">

@@ -3,8 +3,17 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronLeftIcon } from '@heroicons/react/24/solid';
 import owlImg from "../assets/img/owl.png";
 import GoHomeBtn from "../components/buttons/gohomeBtn";
-import AllTextBtn from "../components/buttons/allTextBtn";
+// import AllTextBtn from "../components/buttons/allTextBtn";
 import FeedbackModal from "../components/madals/feedbackModal";
+
+const CATEGORY_META = [
+  { id: "speed", name: "속도", description: "말이 너무 빨라요. 조금만 천천히 해주세요." },
+  { id: "volume", name: "볼륨", description: "음성이 너무 작아요. 더 크게 말해보세요." },
+  { id: "intonation", name: "억양", description: "억양이 자연스러워요." },
+  { id: "pronunciation", name: "발음", description: "발음이 명확해요." },
+  { id: "filler", name: "말버릇", description: "말버릇이 자주 나타납니다. 주의가 필요해요." },
+  { id: "silence", name: "침묵", description: "침묵이 길어요. 자연스럽게 이어가보세요." }
+];
 
 function ResultFeedback() {
   const navigate = useNavigate();
@@ -12,140 +21,20 @@ function ResultFeedback() {
   const [feedbackData, setFeedbackData] = useState(null);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
 
-  // 여기에 API 추가하기 !!!!!!
-  // API로부터 데이터를 받아오는 함수
-  const fetchFeedbackData = async () => {
-    try {
-      // 임시 더미 데이터
-      const dummyData = {
-        summary: {
-          total_count: 6,
-          feedback_categories: [
-            {
-              id: "habit",
-              name: "말버릇",
-              count: 9,
-              level: "warning",
-              description: "말버릇이 자주 나타납니다. 주의가 필요해요."
-            },
-            {
-              id: "speed",
-              name: "속도",
-              count: 7,
-              level: "warning",
-              description: "말이 너무 빨라요. 조금만 천천히 해주세요."
-            },
-            {
-              id: "intonation",
-              name: "억양",
-              count: 0,
-              level: "normal",
-              description: "억양이 자연스러워요."
-            },
-            {
-              id: "pronunciation",
-              name: "발음",
-              count: 0,
-              level: "normal",
-              description: "발음이 명확해요."
-            },
-          ]
-        },
-        segments: [
-          {
-            id: 1,
-            startTime: "00:02",
-            endTime: "00:05",
-            text: "안녕하세요. 발표자 김강현입니다.",
-            feedback: ["habit"]
-          },
-          {
-            id: 2,
-            startTime: "00:13",
-            endTime: "00:15",
-            text: "드디어 미니 프로젝트가 끝이 났는데요.",
-            feedback: ["speed", "habit"]
-          },
-          {
-            id: 3,
-            startTime: "00:31",
-            endTime: "00:35",
-            text: "음.. 그럼 이제 저희 프로젝트를 소개하겠습니다.",
-            feedback: ["pronunciation", "pronunciation"]
-          },
-          {
-            id: 4,
-            startTime: "00:02",
-            endTime: "00:05",
-            text: "안녕하세요. 발표자 김강현입니다.",
-            feedback: ["habit"]
-          },
-          {
-            id: 5,
-            startTime: "00:13",
-            endTime: "00:15",
-            text: "드디어 미니 프로젝트가 끝이 났는데요.",
-            feedback: ["speed", "habit"]
-          },
-          {
-            id: 6,
-            startTime: "00:13",
-            endTime: "00:15",
-            text: "드디어 미니 프로젝트가 끝이 났는데요.",
-            feedback: ["speed", "habit"]
-          },
-          {
-            id: 7,
-            startTime: "00:13",
-            endTime: "00:15",
-            text: "드디어 미니 프로젝트가 끝이 났는데요.",
-            feedback: ["speed", "habit"]
-          },
-          {
-            id: 8,
-            startTime: "00:13",
-            endTime: "00:15",
-            text: "드디어 미니 프로젝트가 끝이 났는데요.",
-            feedback: ["speed", "habit"]
-          },
-          {
-            id: 9,
-            startTime: "00:13",
-            endTime: "00:15",
-            text: "드디어 미니 프로젝트가 끝이 났는데요.",
-            feedback: ["speed", "habit"]
-          },
-          {
-            id: 10,
-            startTime: "00:13",
-            endTime: "00:15",
-            text: "드디어 미니 프로젝트가 끝이 났는데요.",
-            feedback: ["speed", "habit"]
-          },
-        ]
-      };
-      
-      setFeedbackData(dummyData);
-    } catch (error) {
-      console.error('피드백 데이터를 불러오는데 실패했습니다:', error);
-    }
-  };
-
   useEffect(() => {
-    // location.state가 없으면 홈으로 리다이렉트
-    if (!location.state?.fileName) {
+    if (!location.state?.result) {
       navigate('/');
       return;
     }
-    fetchFeedbackData();
-  }, [location.state?.fileName]);
+    setFeedbackData(location.state.result);
+  }, [location.state?.result, navigate]);
 
   if (!feedbackData) {
     return null;
   }
 
   const handleFeedbackClick = (feedbackId, text) => {
-    const category = feedbackData.summary.feedback_categories.find(c => c.id === feedbackId);
+    const category = feedbackData.segments.find(c => c.id === feedbackId);
     setSelectedFeedback({
       ...category,
       text: text
@@ -154,17 +43,15 @@ function ResultFeedback() {
 
   const filteredSegments = feedbackData.segments.filter(
     segment =>
-      segment.feedback &&
-      segment.feedback.some(feedbackId =>
-        feedbackData.summary.feedback_categories.some(cat => cat.id === feedbackId)
-      )
+      CATEGORY_META.some(cat => segment[cat.id])
   );
-  const visibleCategoryCounts = feedbackData.summary.feedback_categories.map(cat => {
+  const visibleCategoryCounts = CATEGORY_META.map(cat => {
     const count = filteredSegments.filter(segment =>
-      segment.feedback.includes(cat.id)
+      segment[cat.id]
     ).length;
     return { ...cat, visibleCount: count };
   });
+  
   // 총 피드백 수: 화면에 보이는 segment들의 카테고리별 등장 횟수 합산
   const totalCount = visibleCategoryCounts.reduce((sum, cat) => sum + cat.visibleCount, 0);
 
@@ -217,44 +104,40 @@ function ResultFeedback() {
           
           {/* 피드백 상세 리스트 */}
           <div className="flex-1 overflow-y-scroll scrollbar scrollbar-thumb-white scrollbar-track-blue-200 pr-2 space-y-3">
-            {filteredSegments.map((segment) => (
-              <div key={segment.id}>
-                <div className="flex items-start">
-                  <div className="text-xs text-blue-900 w-24 flex-shrink-0 pt-1">
-                    {segment.startTime} - {segment.endTime}
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start flex-wrap gap-2">
-                      <span className="text-base text-gray-800 relative group">
-                        {segment.text}
-                        {segment.feedback.some(feedbackId => {
-                          const category = feedbackData.summary.feedback_categories.find(c => c.id === feedbackId);
-                          return category && category.level === 'warning';
-                        }) && (
-                          <span className="absolute bottom-0 left-0 w-full h-[1px] bg-red-400"></span>
-                        )}
-                      </span>
-                      <div className="flex gap-1 flex-wrap">
-                        {segment.feedback.map(feedbackId => {
-                          const category = feedbackData.summary.feedback_categories.find(c => c.id === feedbackId);
-                          if (!category) return null;
-                          return (
-                            <button
-                              key={category.id}
-                              onClick={() => handleFeedbackClick(feedbackId, segment.text)}
-                              className="px-2 py-0.5 bg-white border text-xs rounded flex items-center font-bold border-red-400 text-red-500"
-                            >
-                              <span className="mr-1 text-red-500">⚠️</span>
-                              {category.name}
-                            </button>
-                          );
-                        })}
+            {filteredSegments.map((segment) => {
+              // 카테고리 값이 하나라도 있으면 밑줄
+              const hasWarning = CATEGORY_META.some(cat => segment[cat.id]);
+              return (
+                <div key={segment.id}>
+                  <div className="flex items-start">
+                    <div className="text-xs text-blue-900 w-24 flex-shrink-0 pt-1">
+                      {segment.startPoint} - {segment.endPoint}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-start flex-wrap gap-2">
+                        <span className={`text-base text-gray-800 ${hasWarning ? 'border-b-2 border-red-400' : ''} block`}>
+                          {segment.word}
+                        </span>
+                        <div className="flex gap-1 flex-wrap">
+                          {CATEGORY_META.map(cat => (
+                            segment[cat.id] ? (
+                              <button
+                                key={`${segment.id}-${cat.id}`}
+                                onClick={() => handleFeedbackClick(segment.id, segment.word)}
+                                className="px-2 py-0.5 bg-white border text-xs rounded flex items-center font-bold border-red-400 text-red-500"
+                              >
+                                <span className="mr-1 text-red-500">⚠️</span>
+                                {cat.name}
+                              </button>
+                            ) : null
+                          ))}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
         

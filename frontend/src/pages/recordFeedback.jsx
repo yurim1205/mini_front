@@ -18,7 +18,6 @@ const RECORDING_STATE = {
   RECORDING: 'recording',
   FINISHED: 'finished',
   ERROR: 'error',
-  ANALYZING: 'analyzing'
 };
 
 const PLAYING_STATE = {
@@ -57,7 +56,6 @@ function RecordFeedback() {
   const mediaStreamRef = useRef(null);
   const recordingStartTimeRef = useRef(0);
 
-  // ... (useEffect, handleMicrophonePermission, startRecordingInternal, handleStopRecording, handlePlayPauseAudio, handleStopAudioForPlayback 등 이전과 동일한 함수들) ...
   useEffect(() => {
     let currentAudioUrl = audioUrl;
     return () => {
@@ -288,31 +286,41 @@ function RecordFeedback() {
     if (audioEl) {
       audioEl.pause();
       audioEl.currentTime = 0;
-    }
+    }교
   };
 
-
-  const handleAnalysis = () => {
+// 녹음파일 넘기는 부분
+// 사용자가 마이크로 녹음 → Blob으로 저장
+// 녹음된 Blob을 FormData로 서버에 POST를 통해 분석 요청
+// 서버에서 받은 결과(result)를 결과 페이지로 전달
+  const handleAnalysis = async () => {
     if (!recordedAudioBlob) {
       alert("녹음된 오디오 파일이 없습니다.");
       return;
     }
-    setRecordingState(RECORDING_STATE.ANALYZING);
-    // =============== 수정된 부분 시작 ===============
-    navigate('/loading', { // 경로를 '/loading'으로 변경
-    // =============== 수정된 부분 끝 ===============
-      state: {
-        audioBlob: recordedAudioBlob,
-        fileName: 'recorded_audio.webm'
-        // 만약 /loading 페이지에서 audioBlob이 필요 없다면 state에서 제외할 수 있습니다.
-        // 또는 /loading 페이지에서 작업을 수행한 후 /feedback-result로 이동할 때 이 state를 전달할 수 있습니다.
-      }
-    });
+    const formData = new FormData();
+    formData.append('file', recordedAudioBlob, 'recorded_audio.webm');
+
+    try {
+      const response = await fetch('http://192.168.0.195:8000/api/speech/analyze', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) throw new Error('서버 오류');
+      const result = await response.json();
+      navigate('/resultFeedback', { state: { result } });
+    } catch (err) {
+      alert('분석 요청에 실패했습니다.');
+    }
   };
 
   const handleReset = (keepPermission = false) => {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      try { mediaRecorderRef.current.stop(); } catch (e) { /* 무시 */ }
+      try { 
+        mediaRecorderRef.current.stop(); 
+      } catch (e) {
+        // 에러 무시
+      }
     }
     mediaRecorderRef.current = null;
 
@@ -465,9 +473,9 @@ function RecordFeedback() {
                 </button>
                 <AnalysisBtn
                   onClick={handleAnalysis}
-                  disabled={!recordedAudioBlob || !isPlayable || recordingState === RECORDING_STATE.ANALYZING}
+                  disabled={!recordedAudioBlob || !isPlayable}
                 >
-                  {recordingState === RECORDING_STATE.ANALYZING ? "로딩 페이지로 이동 중..." : "분석 시작"}
+                  분석 시작
                 </AnalysisBtn>
             </div>
           </>
@@ -508,7 +516,7 @@ function RecordFeedback() {
           </span>
           <div style={{ width: '2.25rem' }} />
         </div>
-        <img src={owlImg} alt="부엉이" className="w-32 mx-auto mt-8" />
+        <img src={owlImg} alt="부엉이" className="w-32 mx-auto mt-12" />
         <div
           className="rounded-3xl rounded-b-none shadow-md w-full px-6 py-6 mt-0 flex flex-col items-center min-h-screen"
           style={{
@@ -519,8 +527,7 @@ function RecordFeedback() {
             {renderMainContent()}
           </div>
           {/* 안내 문구 */}
-          <ul className="text-xs text-gray-700 w-full list-disc pl-4 mt-0 mb-[440px]">
-            <li>최대 n분까지 녹음 가능합니다.</li>
+          <ul className="text-xs text-gray-700 w-full list-disc pl-4 mt-0 mb-[480px]">
             <li>음성이 너무 작거나 주변 소음이 심하면 정확도가 떨어질 수 있습니다.</li>
           </ul>
         </div>
