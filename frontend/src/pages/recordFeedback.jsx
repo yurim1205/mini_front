@@ -69,7 +69,6 @@ function RecordFeedback() {
       }
       if (currentAudioUrl) {
         URL.revokeObjectURL(currentAudioUrl);
-        // console.log("Cleanup: Revoked audioUrl on unmount", currentAudioUrl); // 필요시 주석 해제
       }
       if (timerIntervalRef.current) {
         clearInterval(timerIntervalRef.current);
@@ -513,28 +512,34 @@ function RecordFeedback() {
   };
 
   return (
-    <div className="w-screen h-screen flex justify-center items-start bg-gray-100 overflow-y-auto">
+    <div className="w-screen h-screen flex justify-center items-center bg-gray-100">
       <div
-        className="relative w-full max-w-[375px] min-h-screen flex flex-col items-center shadow-2xl"
-        style={{ background: "linear-gradient(180deg, #6B9AD0 0%, #8AAEDF 35%, #A9C5EA 65%, #D1E0F5 100%)" }}
+        className="relative h-screen flex flex-col items-center max-w-[360px] w-full"
+        style={{
+          background: "linear-gradient(to bottom, #6699E6 0%, #fff 100%)"
+        }}
       >
-        <header className="w-full px-3 py-4 flex items-center justify-between sticky top-0 z-20" style={{backgroundColor: 'rgba(107, 154, 208, 0.7)'}}>
-          <button onClick={() => navigate(-1)} className="p-2 text-white hover:bg-white/25 rounded-full focus:outline-none focus:ring-2 focus:ring-white/50 transition-colors" aria-label="뒤로가기">
-            <ChevronLeftIcon className="w-6 h-6 md:w-7 md:h-7" />
+        <div className="flex items-center w-full px-4 pt-6 justify-between">
+          <button onClick={() => navigate(-1)} className="bg-transparent p-0 leading-none" style={{ width: '2.25rem', height: '2.25rem' }}>
+            <ChevronLeftIcon className="w-8 h-8 text-white" />
           </button>
-          <h1 className="text-xl font-semibold text-white text-center flex-1 -ml-4">
+          <span className="text-xl font-semibold text-white text-center flex-1">
             녹음해서 피드백 받기
-          </h1>
-          <div className="w-10 md:w-11"></div>
-        </header>
-
-        <div className="mt-4 mb-3 md:mt-5 md:mb-4 flex justify-center">
-          <img src={owlImg} alt="부엉이" className="w-24 h-24 md:w-28 md:h-28" />
+          </span>
+          <div style={{ width: '2.25rem' }} />
         </div>
-
-        <main className="w-full flex flex-col items-center flex-1 pb-4">
-          {renderMainContent()}
-        </main>
+        <img src={owlImg} alt="부엉이" className="w-32 mx-auto mt-8" />
+        <div className="bg-white rounded-2xl shadow-md w-full px-6 py-6 mt-2 flex flex-col items-center">
+          {/* 녹음 상태/마이크/시간/버튼 등 */}
+          <div className="w-full flex flex-col items-center mb-4">
+            {renderMainContent()}
+          </div>
+          {/* 안내 문구 */}
+          <ul className="text-xs text-gray-700 w-full list-disc pl-4 mt-2 mb-2">
+            <li>최대 n분까지 녹음 가능합니다.</li>
+            <li>음성이 너무 작거나 주변 소음이 심하면 정확도가 떨어질 수 있습니다.</li>
+          </ul>
+        </div>
       </div>
     </div>
   );
