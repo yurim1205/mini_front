@@ -29,8 +29,8 @@ const PLAYING_STATE = {
 const CATEGORY_META = [
   { id: "speed", name: "속도", description: "말이 너무 빨라요. 조금만 천천히 해주세요." },
   { id: "volume", name: "볼륨", description: "음성이 너무 작아요. 더 크게 말해보세요." },
-  { id: "intonation", name: "억양", description: "억양이 자연스러워요." },
-  { id: "pronunciation", name: "발음", description: "발음이 명확해요." },
+  { id: "intonation", name: "억양", description: "억양을 자연스럽게 해주세요." },
+  { id: "pronunciation", name: "발음", description: "발음을 명확하게 해주세요." },
   { id: "filler", name: "말버릇", description: "말버릇이 자주 나타납니다. 주의가 필요해요." },
   { id: "silence", name: "침묵", description: "침묵이 길어요. 자연스럽게 이어가보세요." }
 ];
