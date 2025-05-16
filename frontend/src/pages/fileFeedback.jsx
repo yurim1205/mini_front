@@ -4,6 +4,16 @@ import owlImg from "../assets/img/owl.png";
 import { ChevronLeftIcon, XMarkIcon } from '@heroicons/react/24/solid';
 import AnalysisBtn from "../components/common/analysisBtn";
 
+
+const CATEGORY_META = [
+  { id: "speed", name: "속도", description: "말이 너무 빨라요. 조금만 천천히 해주세요." },
+  { id: "volume", name: "볼륨", description: "음성이 너무 작아요. 더 크게 말해보세요." },
+  { id: "intonation", name: "억양", description: "억양이 자연스러워요." },
+  { id: "pronunciation", name: "발음", description: "발음이 명확해요." },
+  { id: "filler", name: "말버릇", description: "말버릇이 자주 나타납니다. 주의가 필요해요." },
+  { id: "silence", name: "침묵", description: "침묵이 길어요. 자연스럽게 이어가보세요." }
+];
+
 function FileFeedback() {
   const navigate = useNavigate();
   const fileInputRef = useRef();
@@ -25,34 +35,13 @@ function FileFeedback() {
     }
   };
 
-  const handleAnalysis = async () => {
-    try {
-      const formData = new FormData();
-      formData.append('file', fileInputRef.current.files[0]);
-
-      // 1. POST 요청 시작 및 응답 대기
-      const response = await fetch('http://192.168.0.195:8000/api/speech/analyze', {
-        method: 'POST',
-        body: formData,
-      });
-      const data = await response.json();
-
-      const filteredSegments = data.segments.filter(
-        segment =>
-          CATEGORY_META.some(cat => segment[cat.id])
-      );
-
-      const visibleCategoryCounts = CATEGORY_META.map(cat => {
-        const count = filteredSegments.filter(segment =>
-          segment[cat.id]
-        ).length;
-        return { ...cat, visibleCount: count };
-      });
-
-      navigate('/loading', { state: { data, fileName } });
-    } catch (error) {
-      console.error('파일 처리 중 오류가 발생했습니다:', error);
+  const handleAnalysis = () => {
+    if (!fileInputRef.current.files[0]) {
+      alert("파일을 선택해주세요.");
+      return;
     }
+    // 파일 객체와 파일명 전달하며 로딩 페이지로 이동
+    navigate('/loading', { state: { file: fileInputRef.current.files[0], fileName } });
   };
 
   return (

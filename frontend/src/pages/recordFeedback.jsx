@@ -26,6 +26,15 @@ const PLAYING_STATE = {
   PAUSED: 'paused',
 };
 
+const CATEGORY_META = [
+  { id: "speed", name: "속도", description: "말이 너무 빨라요. 조금만 천천히 해주세요." },
+  { id: "volume", name: "볼륨", description: "음성이 너무 작아요. 더 크게 말해보세요." },
+  { id: "intonation", name: "억양", description: "억양이 자연스러워요." },
+  { id: "pronunciation", name: "발음", description: "발음이 명확해요." },
+  { id: "filler", name: "말버릇", description: "말버릇이 자주 나타납니다. 주의가 필요해요." },
+  { id: "silence", name: "침묵", description: "침묵이 길어요. 자연스럽게 이어가보세요." }
+];
+
 const formatTime = (secondsInput) => {
   const seconds = typeof secondsInput === 'number' && !isNaN(secondsInput) ? Math.round(secondsInput) : 0;
   if (seconds === Infinity || seconds < 0) return "00:00";
@@ -48,6 +57,7 @@ function RecordFeedback() {
   const [recordingTime, setRecordingTime] = useState(0);
   const [totalDuration, setTotalDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [recognizedText, setRecognizedText] = useState("");
 
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
@@ -55,6 +65,7 @@ function RecordFeedback() {
   const audioRef = useRef(null);
   const mediaStreamRef = useRef(null);
   const recordingStartTimeRef = useRef(0);
+  const recognitionRef = useRef(null);
 
   useEffect(() => {
     let currentAudioUrl = audioUrl;
@@ -71,6 +82,10 @@ function RecordFeedback() {
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
         mediaStreamRef.current = null;
+      }
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+        recognitionRef.current = null;
       }
     };
   }, [audioUrl]);
@@ -154,6 +169,40 @@ function RecordFeedback() {
     }
   }, [audioUrl, totalDuration]);
 
+  useEffect(() => {
+    console.log('음성 인식 결과:', recognizedText);
+  }, [recognizedText]);
+
+  // Web Speech API로 음성 인식 시작
+  const startRecognition = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert('이 브라우저는 음성 인식을 지원하지 않습니다.');
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'ko-KR';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+        .map(result => result[0].transcript)
+        .join('');
+      setRecognizedText(transcript);
+    };
+    recognition.onerror = (event) => {
+      console.error('음성 인식 오류:', event.error);
+    };
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const stopRecognition = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+  };
+
   const handleMicrophonePermission = async () => {
     if (permissionStatus === 'denied' && recordingState !== RECORDING_STATE.ERROR) {
       alert("마이크 접근 권한이 거부되었습니다. 브라우저 설정을 확인하거나 페이지를 새로고침 후 다시 시도해주세요.");
@@ -198,6 +247,10 @@ function RecordFeedback() {
     setRecordingTime(0);
     setCurrentTime(0);
     setTotalDuration(0);
+    setRecognizedText("");
+
+    // 음성 인식 시작
+    startRecognition();
 
     const options = { mimeType: 'audio/webm' };
     if (!MediaRecorder.isTypeSupported(options.mimeType)) {
@@ -231,6 +284,7 @@ function RecordFeedback() {
             if (mediaStreamRef.current === stream) { stream.getTracks().forEach(track => track.stop()); mediaStreamRef.current = null; }
             setRecordedAudioBlob(null); setAudioUrl(null); setTotalDuration(0);
             audioChunksRef.current = [];
+            stopRecognition();
             return;
         }
 
@@ -247,17 +301,20 @@ function RecordFeedback() {
           mediaStreamRef.current = null;
         }
         audioChunksRef.current = [];
+        stopRecognition();
       };
       mediaRecorderRef.current.onerror = (event) => {
         console.error("MediaRecorder 오류:", event.error ? event.error.name : 'Unknown error', event.error);
         setRecordingState(RECORDING_STATE.ERROR);
         if (mediaStreamRef.current === stream) { stream.getTracks().forEach(track => track.stop()); mediaStreamRef.current = null; }
+        stopRecognition();
       };
       mediaRecorderRef.current.start();
     } catch (error) {
       console.error("MediaRecorder 설정 또는 시작 중 오류:", error);
       setRecordingState(RECORDING_STATE.ERROR);
       if (mediaStreamRef.current === stream) { stream.getTracks().forEach(track => track.stop()); mediaStreamRef.current = null; }
+      stopRecognition();
     }
   };
 
@@ -265,6 +322,7 @@ function RecordFeedback() {
     if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
       mediaRecorderRef.current.stop();
     }
+    stopRecognition();
   };
 
   const handlePlayPauseAudio = () => {
@@ -286,32 +344,17 @@ function RecordFeedback() {
     if (audioEl) {
       audioEl.pause();
       audioEl.currentTime = 0;
-    }교
+    }
   };
 
-// 녹음파일 넘기는 부분
-// 사용자가 마이크로 녹음 → Blob으로 저장
-// 녹음된 Blob을 FormData로 서버에 POST를 통해 분석 요청
-// 서버에서 받은 결과(result)를 결과 페이지로 전달
-  const handleAnalysis = async () => {
-    if (!recordedAudioBlob) {
-      alert("녹음된 오디오 파일이 없습니다.");
+  // 분석 버튼 클릭 시: 인식된 텍스트로 피드백 데이터 생성
+  const handleAnalysis = () => {
+    if (!recognizedText) {
+      alert("음성 인식 결과가 없습니다.\n녹음 후 다시 시도해주세요.");
       return;
     }
-    const formData = new FormData();
-    formData.append('file', recordedAudioBlob, 'recorded_audio.webm');
-
-    try {
-      const response = await fetch('http://192.168.0.195:8000/api/speech/analyze', {
-        method: 'POST',
-        body: formData,
-      });
-      if (!response.ok) throw new Error('서버 오류');
-      const result = await response.json();
-      navigate('/resultFeedback', { state: { result } });
-    } catch (err) {
-      alert('분석 요청에 실패했습니다.');
-    }
+    // 분석 시작 시 로딩 페이지로 이동
+    navigate('/loading', { state: { recognizedText } });
   };
 
   const handleReset = (keepPermission = false) => {
@@ -343,13 +386,17 @@ function RecordFeedback() {
     setRecordingTime(0);
     setRecordingState(RECORDING_STATE.READY);
     setPlayingState(PLAYING_STATE.STOPPED);
+    setRecognizedText("");
 
     if (!keepPermission) {
       setPermissionStatus('idle');
     }
     audioChunksRef.current = [];
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
   };
-
 
   const renderMainContent = () => {
     let timeDisplayTextElement;
@@ -473,7 +520,7 @@ function RecordFeedback() {
                 </button>
                 <AnalysisBtn
                   onClick={handleAnalysis}
-                  disabled={!recordedAudioBlob || !isPlayable}
+                  disabled={!recognizedText || !isPlayable}
                 >
                   분석 시작
                 </AnalysisBtn>
@@ -508,7 +555,7 @@ function RecordFeedback() {
         }}
       >
         <div className="flex items-center w-full px-4 pt-6 justify-between">
-          <button onClick={() => navigate(-1)} className="bg-transparent p-0 leading-none" style={{ width: '2.25rem', height: '2.25rem' }}>
+          <button onClick={() => navigate("/")} className="bg-transparent p-0 leading-none" style={{ width: '2.25rem', height: '2.25rem' }}>
             <ChevronLeftIcon className="w-8 h-8 text-white" />
           </button>
           <span className="text-xl font-semibold text-white text-center flex-1">

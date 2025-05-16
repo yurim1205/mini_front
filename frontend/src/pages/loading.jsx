@@ -15,14 +15,59 @@ function Loading() {
     const [currentImg, setCurrentImg] = useState(img1);
 
     useEffect(() => {
-      // location.state가 없으면 홈으로 리다이렉트
+      // recordFeedback에서 온 경우: recognizedText로 피드백 생성
+      if (location.state?.recognizedText) {
+        const recognizedText = location.state.recognizedText;
+        setTimeout(() => {
+          const speedFeedback = recognizedText.length < 10 ? "발화 속도가 빠릅니다." : null;
+          const fillerFeedback = recognizedText.includes("음") ? "말버릇(음...)이 감지되었습니다." : null;
+          const result = {
+            segments: [
+              {
+                id: 1,
+                startPoint: 0,
+                endPoint: recognizedText.length,
+                word: recognizedText,
+                speed: speedFeedback,
+                volume: null,
+                intonation: null,
+                pronunciation: null,
+                filler: fillerFeedback,
+                silence: null
+              }
+            ]
+          };
+          navigate('/resultFeedback', { state: { result } });
+        }, 1200);
+        return;
+      }
+      // 파일 업로드 플로우: file 객체가 넘어온 경우
+      if (location.state?.file) {
+        const formData = new FormData();
+        formData.append('file', location.state.file);
+        fetch('http://192.168.0.195:8000/api/speech/analyze', {
+          method: 'POST',
+          body: formData,
+        })
+          .then(res => res.json())
+          .then(data => {
+            navigate('/resultFeedback', { state: { result: data } });
+          })
+          .catch(() => {
+            alert('분석에 실패했습니다.');
+            navigate('/');
+          });
+        return;
+      }
+      // 기존 파일 업로드 플로우 (data, fileName만 있는 경우)
       if (!location.state?.fileName) {
         navigate('/');
         return;
       }
-      // data가 있으면 바로 결과 페이지로 이동
       if (location.state?.data) {
-        navigate('/resultFeedback', { state: { result: location.state.data } });
+        setTimeout(() => {
+          navigate('/resultFeedback', { state: { result: location.state.data } });
+        }, 1200);
       }
     }, [location.state, navigate]);
 

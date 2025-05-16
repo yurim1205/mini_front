@@ -5,6 +5,7 @@ import owlImg from "../assets/img/owl.png";
 import GoHomeBtn from "../components/buttons/gohomeBtn";
 // import AllTextBtn from "../components/buttons/allTextBtn";
 import FeedbackModal from "../components/madals/feedbackModal";
+import dayjs from 'dayjs';
 
 const CATEGORY_META = [
   { id: "speed", name: "속도", description: "말이 너무 빨라요. 조금만 천천히 해주세요." },
@@ -14,6 +15,13 @@ const CATEGORY_META = [
   { id: "filler", name: "말버릇", description: "말버릇이 자주 나타납니다. 주의가 필요해요." },
   { id: "silence", name: "침묵", description: "침묵이 길어요. 자연스럽게 이어가보세요." }
 ];
+
+// 초를 mm:ss로 변환하는 함수
+function formatSecondsToMMSS(seconds) {
+  const min = String(Math.floor(seconds / 60)).padStart(2, '0');
+  const sec = String(Math.floor(seconds % 60)).padStart(2, '0');
+  return `${min}:${sec}`;
+}
 
 function ResultFeedback() {
   const navigate = useNavigate();
@@ -33,17 +41,19 @@ function ResultFeedback() {
     return null;
   }
 
-  const handleFeedbackClick = (feedbackId, text) => {
+  const handleFeedbackClick = (feedbackId, text, categoryId) => {
     const category = feedbackData.segments.find(c => c.id === feedbackId);
     setSelectedFeedback({
       ...category,
-      text: text
+      text: text,
+      categoryId: categoryId
     });
   };
 
   const filteredSegments = feedbackData.segments.filter(
     segment =>
-      CATEGORY_META.some(cat => segment[cat.id])
+      segment.word && segment.word.trim() !== '' // word가 있으면 무조건 포함
+      // 기존: CATEGORY_META.some(cat => segment[cat.id])
   );
   const visibleCategoryCounts = CATEGORY_META.map(cat => {
     const count = filteredSegments.filter(segment =>
@@ -66,7 +76,7 @@ function ResultFeedback() {
       >
         <div className="flex items-center w-full px-4 pt-4 justify-between">
           <button
-            onClick={() => navigate("/file")}
+            onClick={() => navigate("/record")}
             className="bg-transparent p-0 leading-none"
             style={{ width: '2.25rem', height: '2.25rem' }}
           >
@@ -111,10 +121,10 @@ function ResultFeedback() {
                 <div key={segment.id}>
                   <div className="flex items-start">
                     <div className="text-xs text-blue-900 w-24 flex-shrink-0 pt-1">
-                      {segment.startPoint} - {segment.endPoint}
+                      {formatSecondsToMMSS(segment.startPoint)} - {formatSecondsToMMSS(segment.endPoint)}
                     </div>
                     <div className="flex-1">
-                      <div className="flex items-start flex-wrap gap-2">
+                      <div className="flex flex-col items-start gap-1">
                         <span className={`text-base text-gray-800 ${hasWarning ? 'border-b-2 border-red-400' : ''} block`}>
                           {segment.word}
                         </span>
@@ -123,7 +133,7 @@ function ResultFeedback() {
                             segment[cat.id] ? (
                               <button
                                 key={`${segment.id}-${cat.id}`}
-                                onClick={() => handleFeedbackClick(segment.id, segment.word)}
+                                onClick={() => handleFeedbackClick(segment.id, segment.word, cat.id)}
                                 className="px-2 py-0.5 bg-white border text-xs rounded flex items-center font-bold border-red-400 text-red-500"
                               >
                                 <span className="mr-1 text-red-500">⚠️</span>
