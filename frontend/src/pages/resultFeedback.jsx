@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronLeftIcon } from '@heroicons/react/24/solid';
 import owlImg from "../assets/img/owl.png";
 import GoHomeBtn from "../components/buttons/gohomeBtn";
-// import AllTextBtn from "../components/buttons/allTextBtn";
+import AllTextBtn from "../components/buttons/allTextBtn";
 import FeedbackModal from "../components/madals/feedbackModal";
 import dayjs from 'dayjs';
 
@@ -13,7 +13,8 @@ const CATEGORY_META = [
   { id: "intonation", name: "억양", description: "억양을 자연스럽게 해주세요." },
   { id: "pronunciation", name: "발음", description: "발음을 명확하게 해주세요." },
   { id: "filler", name: "말버릇", description: "말버릇이 자주 나타납니다. 주의가 필요해요." },
-  { id: "silence", name: "침묵", description: "침묵이 길어요. 자연스럽게 이어가보세요." }
+  { id: "vocabulary", name: "어휘", description: "과장된 표현입니다." },
+  { id: "silence", name: "침묵", description: "침묵이 너무 길어요." }
 ];
 
 // 초를 mm:ss로 변환하는 함수
@@ -35,6 +36,7 @@ function ResultFeedback() {
       return;
     }
     setFeedbackData(location.state.result);
+    // console.log("fullText:", location.state.result.fullText);
   }, [location.state?.result, navigate]);
 
   if (!feedbackData) {
@@ -50,10 +52,11 @@ function ResultFeedback() {
     });
   };
 
+  // 중복 제거: word와 startPoint가 같은 segment는 한 번만 남김
   const filteredSegments = feedbackData.segments.filter(
-    segment =>
-      segment.word && segment.word.trim() !== '' // word가 있으면 무조건 포함
-      // 기존: CATEGORY_META.some(cat => segment[cat.id])
+    (segment, idx, arr) =>
+      segment.word && segment.word.trim() !== '' &&
+      arr.findIndex(s => s.word === segment.word && s.startPoint === segment.startPoint) === idx
   );
   const visibleCategoryCounts = CATEGORY_META.map(cat => {
     const count = filteredSegments.filter(segment =>
@@ -76,7 +79,7 @@ function ResultFeedback() {
       >
         <div className="flex items-center w-full px-4 pt-4 justify-between">
           <button
-            onClick={() => navigate("/record")}
+            onClick={() => navigate("/fileFeedback")}
             className="bg-transparent p-0 leading-none"
             style={{ width: '2.25rem', height: '2.25rem' }}
           >
@@ -158,14 +161,14 @@ function ResultFeedback() {
           text={selectedFeedback?.text}
         />
         
-        {/* 버튼 수평 배치 */}
         <div className="flex w-full gap-x-2 px-4 mt-6">
           <GoHomeBtn onClick={() => navigate("/")} className="flex-1 text-sm" />
           {/* <AllTextBtn 
             onClick={() => navigate("/allContent", { 
               state: { 
                 feedbackData,
-                fileName: location.state?.fileName 
+                fileName: location.state?.fileName,
+                fullText: feedbackData.fullText
               }
             })} 
             className="flex-1 text-sm" 

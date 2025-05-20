@@ -1,6 +1,6 @@
 import React from "react";
 
-function AllTextBtn({ children = "전체 내용 보기", onClick, className = "", ...props }) {
+function AllTextBtn({ children = "예상 질문 확인", onClick, className = "", ...props }) {
   return (
     <button
       className={`

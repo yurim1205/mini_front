@@ -51,7 +51,10 @@ function Loading() {
         })
           .then(res => res.json())
           .then(data => {
-            navigate('/resultFeedback', { state: { result: data } });
+            // 백엔드 응답에 fullText가 있으면 result에 명시적으로 포함시켜 넘김
+            const resultWithFullText = { ...data };
+            if (data.fullText) resultWithFullText.fullText = data.fullText;
+            navigate('/resultFeedback', { state: { result: resultWithFullText } });
           })
           .catch(() => {
             alert('분석에 실패했습니다.');
